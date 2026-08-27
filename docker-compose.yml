@@ -1,0 +1,66 @@
+name: laravel-bpm-engine
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: bpm-engine-postgres
+    environment:
+      POSTGRES_DB: bpm_engine
+      POSTGRES_USER: bpm_engine
+      POSTGRES_PASSWORD: bpm_engine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # Develops/tests the BPM Engine package itself via Orchestra Testbench.
+  # Self-contained: mounts only ./package, no filesystem access to the
+  # docs repo. Design docs are read the normal way — in an editor, or via
+  # the docs-toolkit's served site (mkdocs serve, localhost:8000) — not
+  # piped into this container. See package/README.md for the code/docs
+  # traceability convention, ADR-004 for why this is a separate container
+  # from the docs-toolkit image, and ADR-007 for why it's self-contained.
+  package:
+    build:
+      context: ./package
+    container_name: bpm-engine-package
+    working_dir: /app
+    volumes:
+      - ./package:/app
+    depends_on:
+      - postgres
+    # Idle by default — used via `docker compose run --rm package <command>`,
+    # same pattern as the docs-toolkit container. See package/README.md.
+    command: ["tail", "-f", "/dev/null"]
+
+  # A real, generated Laravel app that installs the package as an actual
+  # Composer dependency (via a path repository) — proves the drop-in
+  # Laravel Model story end-to-end. Empty until bootstrapped, see
+  # demo-app/README.md.
+  demo-app:
+    build:
+      context: ./demo-app
+    container_name: bpm-engine-demo-app
+    working_dir: /app
+    volumes:
+      - ./demo-app:/app
+      - ./package:/package
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+
+  demo-app-worker:
+    build:
+      context: ./demo-app
+    container_name: bpm-engine-demo-app-worker
+    working_dir: /app
+    volumes:
+      - ./demo-app:/app
+      - ./package:/package
+    command: ["php", "artisan", "queue:work"]
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:

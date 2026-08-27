@@ -1,0 +1,14 @@
+# Distribution hygiene: files listed here stay in the git repository
+# (visible during development, on GitHub, etc.) but are stripped from
+# the archive Composer/Packagist ship to consumers on `composer require`.
+# See AGENT_INSTRUCTIONS.md and README.md for why AGENT_INSTRUCTIONS.md
+# itself is excluded — it's dev-process content, not package
+# documentation.
+
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/AGENT_INSTRUCTIONS.md export-ignore
+/Dockerfile export-ignore
+/phpstan.neon export-ignore
+/pint.json export-ignore
+/tests export-ignore

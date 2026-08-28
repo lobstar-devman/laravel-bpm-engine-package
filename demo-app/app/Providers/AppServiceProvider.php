@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\ExpenseDispute;
+use App\Models\ExpenseReport;
+use App\Policies\ExpenseDisputePolicy;
+use App\Policies\ExpenseReportPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::policy(ExpenseReport::class, ExpenseReportPolicy::class);
+        Gate::policy(ExpenseDispute::class, ExpenseDisputePolicy::class);
     }
 }

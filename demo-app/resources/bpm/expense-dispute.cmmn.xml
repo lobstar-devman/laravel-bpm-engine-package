@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             id="Definitions_ExpenseDispute"
+             targetNamespace="https://lobstar.dev/bpm/expense-dispute">
+
+  <case id="expense_dispute" name="Expense Dispute">
+    <caseFileModel />
+
+    <caseRoles>
+      <role id="Role_Investigator" name="Investigator" />
+      <role id="Role_FinanceDirector" name="Finance Director" />
+    </caseRoles>
+
+    <!-- Ad hoc: these are discretionary items on the case plan, not a
+         fixed sequence — any applicable item may be actioned while the
+         case is open, in whatever order the situation calls for. -->
+    <casePlanModel id="CasePlanModel_ExpenseDispute" name="Expense Dispute" autoComplete="false">
+
+      <planItem id="PlanItem_GatherEvidence" definitionRef="HumanTask_GatherEvidence" />
+      <planItem id="PlanItem_Escalate" definitionRef="HumanTask_Escalate" />
+      <planItem id="PlanItem_Interview" definitionRef="HumanTask_Interview" />
+      <planItem id="PlanItem_Resolve" definitionRef="HumanTask_Resolve" />
+
+      <humanTask id="HumanTask_GatherEvidence" name="Gather Evidence" isBlocking="true">
+        <itemControl>
+          <requiredRule />
+          <repetitionRule />
+        </itemControl>
+        <performerRef>Role_Investigator</performerRef>
+      </humanTask>
+
+      <humanTask id="HumanTask_Escalate" name="Escalate to Finance Director" isBlocking="true">
+        <itemControl>
+          <manualActivationRule />
+        </itemControl>
+        <performerRef>Role_Investigator</performerRef>
+      </humanTask>
+
+      <humanTask id="HumanTask_Interview" name="Interview" isBlocking="true">
+        <itemControl>
+          <manualActivationRule />
+          <repetitionRule />
+        </itemControl>
+        <performerRef>Role_Investigator</performerRef>
+      </humanTask>
+
+      <!-- Terminal/exit task: completing it closes the case. -->
+      <humanTask id="HumanTask_Resolve" name="Resolve Dispute" isBlocking="true">
+        <itemControl>
+          <manualActivationRule />
+        </itemControl>
+        <performerRef>Role_FinanceDirector</performerRef>
+        <exitCriterion sentryRef="Sentry_CaseComplete" />
+      </humanTask>
+
+      <sentry id="Sentry_CaseComplete">
+        <planItemOnPart sourceRef="PlanItem_Resolve">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+
+    </casePlanModel>
+  </case>
+</definitions>

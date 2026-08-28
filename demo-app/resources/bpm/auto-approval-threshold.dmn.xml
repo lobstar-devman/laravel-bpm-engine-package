@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="Definitions_AutoApprovalThreshold"
+             name="Auto-Approval Threshold"
+             namespace="https://lobstar.dev/bpm/auto-approval-threshold">
+
+  <decision id="auto_approval_threshold" name="Auto-Approval Threshold">
+    <decisionTable id="DecisionTable_AutoApprovalThreshold" hitPolicy="FIRST">
+      <input id="Input_Amount" label="amount">
+        <inputExpression typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <input id="Input_Category" label="category">
+        <inputExpression typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <output id="Output_AutoApprove" label="auto_approve" typeRef="boolean" />
+
+      <!-- Travel expenses always require Finance review, regardless of amount. -->
+      <rule id="Rule_TravelAlwaysReview">
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>"travel"</text></inputEntry>
+        <outputEntry><text>false</text></outputEntry>
+      </rule>
+
+      <!-- Everything else auto-approves at or under the threshold. -->
+      <rule id="Rule_UnderThreshold">
+        <inputEntry><text>&lt;= 500</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>true</text></outputEntry>
+      </rule>
+
+      <rule id="Rule_OverThreshold">
+        <inputEntry><text>&gt; 500</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>false</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

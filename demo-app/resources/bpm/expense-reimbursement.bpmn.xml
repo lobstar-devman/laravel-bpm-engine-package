@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Definitions_ExpenseReimbursement"
+             targetNamespace="https://lobstar.dev/bpm/expense-reimbursement">
+
+  <process id="expense_reimbursement" name="Expense Reimbursement" isExecutable="true">
+
+    <laneSet id="LaneSet_ExpenseReimbursement">
+      <lane id="Lane_Employee" name="Employee">
+        <flowNodeRef>StartEvent_Submitted</flowNodeRef>
+        <flowNodeRef>Task_SubmitExpense</flowNodeRef>
+      </lane>
+      <lane id="Lane_Manager" name="Manager">
+        <flowNodeRef>Task_ManagerReview</flowNodeRef>
+        <flowNodeRef>Gateway_ManagerDecision</flowNodeRef>
+        <flowNodeRef>Task_EvaluateThreshold</flowNodeRef>
+        <flowNodeRef>Gateway_ThresholdDecision</flowNodeRef>
+      </lane>
+      <lane id="Lane_Finance" name="Finance">
+        <flowNodeRef>Task_FinanceReview</flowNodeRef>
+        <flowNodeRef>Gateway_FinanceDecision</flowNodeRef>
+        <flowNodeRef>EndEvent_Paid</flowNodeRef>
+        <flowNodeRef>EndEvent_Rejected</flowNodeRef>
+      </lane>
+    </laneSet>
+
+    <startEvent id="StartEvent_Submitted" name="Expense Submitted">
+      <outgoing>Flow_ToSubmitTask</outgoing>
+    </startEvent>
+
+    <task id="Task_SubmitExpense" name="Submit Expense">
+      <incoming>Flow_ToSubmitTask</incoming>
+      <outgoing>Flow_submit</outgoing>
+    </task>
+
+    <userTask id="Task_ManagerReview" name="Review Expense">
+      <incoming>Flow_submit</incoming>
+      <outgoing>Flow_ToManagerDecision</outgoing>
+      <!-- Scheduled escalation (QueueDispatcher, 5 business days overdue) bypasses
+           a stalled Manager Review straight to Finance Review. -->
+      <outgoing>Flow_escalate_to_finance</outgoing>
+    </userTask>
+
+    <exclusiveGateway id="Gateway_ManagerDecision" name="Manager Decision">
+      <incoming>Flow_ToManagerDecision</incoming>
+      <outgoing>Flow_reject</outgoing>
+      <outgoing>Flow_ToThresholdEvaluation</outgoing>
+    </exclusiveGateway>
+
+    <businessRuleTask id="Task_EvaluateThreshold" name="Evaluate Auto-Approval Threshold">
+      <incoming>Flow_ToThresholdEvaluation</incoming>
+      <outgoing>Flow_auto_approve</outgoing>
+      <outgoing>Flow_send_to_finance</outgoing>
+    </businessRuleTask>
+
+    <exclusiveGateway id="Gateway_ThresholdDecision" name="Auto-Approve?">
+      <incoming>Flow_auto_approve</incoming>
+      <incoming>Flow_send_to_finance</incoming>
+      <outgoing>Flow_ToPaidFromAutoApprove</outgoing>
+      <outgoing>Flow_ToFinanceReview</outgoing>
+    </exclusiveGateway>
+
+    <task id="Task_FinanceReview" name="Finance Review">
+      <incoming>Flow_ToFinanceReview</incoming>
+      <incoming>Flow_escalate_to_finance</incoming>
+      <outgoing>Flow_ToFinanceDecision</outgoing>
+    </task>
+
+    <exclusiveGateway id="Gateway_FinanceDecision" name="Finance Decision">
+      <incoming>Flow_ToFinanceDecision</incoming>
+      <outgoing>Flow_finance_approve</outgoing>
+      <outgoing>Flow_finance_reject</outgoing>
+    </exclusiveGateway>
+
+    <endEvent id="EndEvent_Paid" name="Paid">
+      <incoming>Flow_ToPaidFromAutoApprove</incoming>
+      <incoming>Flow_finance_approve</incoming>
+    </endEvent>
+
+    <endEvent id="EndEvent_Rejected" name="Rejected">
+      <incoming>Flow_reject</incoming>
+      <incoming>Flow_finance_reject</incoming>
+    </endEvent>
+
+    <sequenceFlow id="Flow_ToSubmitTask" sourceRef="StartEvent_Submitted" targetRef="Task_SubmitExpense" />
+    <sequenceFlow id="Flow_submit" name="submit" sourceRef="Task_SubmitExpense" targetRef="Task_ManagerReview" />
+    <sequenceFlow id="Flow_ToManagerDecision" sourceRef="Task_ManagerReview" targetRef="Gateway_ManagerDecision" />
+    <sequenceFlow id="Flow_reject" name="reject" sourceRef="Gateway_ManagerDecision" targetRef="EndEvent_Rejected" />
+    <sequenceFlow id="Flow_ToThresholdEvaluation" sourceRef="Gateway_ManagerDecision" targetRef="Task_EvaluateThreshold" />
+    <sequenceFlow id="Flow_auto_approve" name="auto_approve" sourceRef="Task_EvaluateThreshold" targetRef="Gateway_ThresholdDecision" />
+    <sequenceFlow id="Flow_send_to_finance" name="send_to_finance" sourceRef="Task_EvaluateThreshold" targetRef="Gateway_ThresholdDecision" />
+    <sequenceFlow id="Flow_ToPaidFromAutoApprove" sourceRef="Gateway_ThresholdDecision" targetRef="EndEvent_Paid" />
+    <sequenceFlow id="Flow_ToFinanceReview" sourceRef="Gateway_ThresholdDecision" targetRef="Task_FinanceReview" />
+    <sequenceFlow id="Flow_escalate_to_finance" name="escalate_to_finance" sourceRef="Task_ManagerReview" targetRef="Task_FinanceReview" />
+    <sequenceFlow id="Flow_ToFinanceDecision" sourceRef="Task_FinanceReview" targetRef="Gateway_FinanceDecision" />
+    <sequenceFlow id="Flow_finance_approve" name="finance_approve" sourceRef="Gateway_FinanceDecision" targetRef="EndEvent_Paid" />
+    <sequenceFlow id="Flow_finance_reject" name="finance_reject" sourceRef="Gateway_FinanceDecision" targetRef="EndEvent_Rejected" />
+
+  </process>
+</definitions>

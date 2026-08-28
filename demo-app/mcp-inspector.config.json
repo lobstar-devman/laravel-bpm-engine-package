@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "bpm-engine-mcp-demo-employee",
+  "name": "bpm-engine-mcp-demo",
   "description": "Domain-verbed MCP tools over the Expense Reimbursement demo scenario (SubmitExpense, ApproveExpense, RejectExpense, EscalateToFinance, OpenDispute).",
   "version": "0.0.1",
   "remotes": [
@@ -10,7 +10,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer REPLACE_WITH_TOKEN_FROM_scripts/generate-sanctum-token.sh",
+          "description": "API key for authentication",           
           "isRequired": true,
           "isSecret": true
         }

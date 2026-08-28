@@ -137,23 +137,13 @@ Add to `../docker-compose.yml`:
 ```
 
 Then `docker compose up mcp-inspector` and open `http://localhost:6274`.
-Configure the connection: 
-**Transport** → Streamable HTTP, **URL** →
-`http://demo-app:8001/mcp/expenses` (container-to-container hostname,
-not `localhost`), 
-**Bearer Token** → the token from step 1. The
-Inspector currently supports only a single auth header, which is fine here since the route only needs `Authorization`.
+To configure the connection: **Add Servers** → **Import from registry config**
+Past the mcp-inspector.config.json file into **File Contents** → **Add Server**
+Then in the new server panel goto **Settings** → **Custom Headers** → **+Add Header**
 
-To skip filling those fields in by hand, use
-[`mcp-inspector.config.json`](mcp-inspector.config.json) instead — a
-`server.json` in the [MCP Registry
-format](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md),
-with the `Authorization` header's `value` prefilled to a placeholder.
-Run `scripts/generate-mcp-config.sh` (see step 1) to get a copy with a
-real token and a role-specific `name` substituted in, then import the
-result in the Inspector UI's "Import server.json" flow. It's unrelated
-to the repo's `.mcp.json` — that one is Laravel Boost's own MCP server
-for coding assistants, not this app's domain-verbed Expense Server.
+| Header | Value |
+|---|---|
+|`Authorization` | `Bearer <token>` |
 
 ### 4. Skip HTTP entirely (fastest for logic-only checks)
 

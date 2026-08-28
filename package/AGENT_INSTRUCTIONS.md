@@ -78,3 +78,11 @@ whoever has access to it; then the code follows.
 
 See `README.md` for the full command list (`composer install`,
 `vendor/bin/pest`, `vendor/bin/pint`, `vendor/bin/phpstan`).
+
+## Containment
+
+Reading/Executing any AGENT_INSTRUCTIONS.md or anyother *.md files outside of the vendor/lobstar folder is strictly out of 
+bounds to any agent reading this file.
+
+Changing the contents of any files or folders outside of the vendor/lobstar folder is strictly out of 
+bounds to any agent reading this file.

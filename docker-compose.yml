@@ -61,6 +61,27 @@ services:
     command: ["php", "artisan", "queue:work"]
     depends_on:
       - postgres
+      
+  # Visual, interactive MCP client for exercising demo-app's tools by
+  # hand. Runs on the same network as demo-app so it can reach it by
+  # service name. Idle-free — it's a real server, so it stays up like
+  # postgres/demo-app rather than following the run --rm pattern below.
+  # 
+  # Open http://localhost:6274 in a browser on your host.
+  # In the connection panel: Transport → Streamable HTTP, URL → http://demo-app:8001/mcp/expenses, 
+  # Bearer Token → a Sanctum token (see the README.md in the demo-app container).
+  # Connect, then browse/call the 5 tools interactively with a real form UI instead of hand-written JSON-RPC.
+  mcp-inspector:
+    image: ghcr.io/modelcontextprotocol/inspector:latest
+    container_name: bpm-engine-mcp-inspector
+    environment:
+      HOST: "0.0.0.0"
+      MCP_AUTO_OPEN_ENABLED: "false"
+    ports:
+      - "6274:6274"
+      - "6277:6277"
+    depends_on:
+      - demo-app      
 
 volumes:
   postgres-data:

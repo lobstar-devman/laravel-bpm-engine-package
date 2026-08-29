@@ -104,7 +104,7 @@ curl -X POST http://localhost:8001/mcp/expenses \
 curl -X POST http://localhost:8001/mcp/expenses \
   -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" -H "MCP-Session-Id: <session-id>" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"submit-expense","arguments":{"amount":42.50,"category":"software","manager_id":2}}}'
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"submit-expense","arguments":{"amount":42.50,"category":"software","manager_email":"manager@example.com"}}}'
 ```
 
 While the package is stubbed, a call that passes authorization currently
@@ -152,7 +152,7 @@ Call a Tool class directly, bypassing JSON-RPC and the session handshake:
 ```
 docker compose run --rm demo-app php artisan tinker --execute='
 Auth::loginUsingId(1);
-$response = app(App\Mcp\Tools\SubmitExpense::class)->handle(new Laravel\Mcp\Request(["amount"=>42.5,"category"=>"software","manager_id"=>2]));
+$response = app(App\Mcp\Tools\SubmitExpense::class)->handle(new Laravel\Mcp\Request(["amount"=>42.5,"category"=>"software","manager_email"=>"manager@example.com"]));
 echo $response->isError() ? "ERROR: " : "OK: ";
 echo (string) $response->content();
 '

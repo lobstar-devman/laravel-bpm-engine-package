@@ -34,7 +34,7 @@ class SubmitExpenseTest extends TestCase
         $response = $tool->handle(new Request([
             'amount' => 123.45,
             'category' => 'travel',
-            'manager_id' => $manager->id,
+            'manager_email' => $manager->email,
         ]));
 
         $this->assertFalse($response->isError());
@@ -58,7 +58,7 @@ class SubmitExpenseTest extends TestCase
         $response = $tool->handle(new Request([
             'amount' => 50,
             'category' => 'meals',
-            'manager_id' => $manager->id,
+            'manager_email' => $manager->email,
         ]));
 
         $this->assertTrue($response->isError());

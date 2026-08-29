@@ -7,6 +7,7 @@ use App\Bpm\Contracts\RevisionGateway;
 use App\Bpm\Support\RevisionId;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Facades\DB;
@@ -35,10 +36,12 @@ class SubmitExpense extends Tool
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'category' => ['required', 'string'],
-            'manager_id' => ['required', 'integer', 'exists:users,id'],
+            'manager_email' => ['required', 'string', 'exists:users,email'],
         ]);
 
         $expenseReport = DB::transaction(function () use ($request, $validated) {
+            $manager = User::where('email', $validated['manager_email'])->firstOrFail();
+
             $revision = $this->modelDefinitionGateway->resolve('expense_reimbursement');
 
             $instance = Instance::create([
@@ -50,7 +53,7 @@ class SubmitExpense extends Tool
             $expenseReport = ExpenseReport::create([
                 'instance_id' => $instance->id,
                 'submitter_id' => $request->user()->id,
-                'manager_id' => $validated['manager_id'],
+                'manager_id' => $manager->id,
                 'amount' => $validated['amount'],
                 'category' => $validated['category'],
                 'submitted_at' => now(),
@@ -77,7 +80,7 @@ class SubmitExpense extends Tool
         return [
             'amount' => $schema->number()->description('The expense amount.')->required(),
             'category' => $schema->string()->description('The expense category, e.g. travel, meals, supplies, software.')->required(),
-            'manager_id' => $schema->integer()->description('The id of the user who must approve this expense.')->required(),
+            'manager_email' => $schema->string()->description('The email of the user who must approve this expense.')->required(),
         ];
     }
 }

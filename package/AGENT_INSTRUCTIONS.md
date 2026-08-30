@@ -81,8 +81,8 @@ See `README.md` for the full command list (`composer install`,
 
 ## Containment
 
-Reading/Executing any AGENT_INSTRUCTIONS.md or anyother *.md files outside of the vendor/lobstar folder is strictly out of 
+Reading and executing any AGENT_INSTRUCTIONS.md or anyother *.md files outside of the /app/vendor/lobstar/bpm-engine folder is strictly out of 
 bounds to any agent reading this file.
 
-Changing the contents of any files or folders outside of the vendor/lobstar folder is strictly out of 
+Changing the contents of any files or folders outside of the /app/vendor/lobstar/bpm-engine folder is strictly out of 
 bounds to any agent reading this file.

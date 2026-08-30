@@ -79,6 +79,4 @@ the specific gap back rather than working around it silently.
 
 ## Containment
 
-Reading and executing any AGENT_INSTRUCTIONS.md or anyother *.md files in the vendor/lobstar folder is strictly out of bounds to any agent reading this file.
-
-Changing the contents of the vendor/lobstar folder is strictly out of bounds to any agent reading this file.
+Cross-repo isolation policy: see `CLAUDE.md` in this directory.

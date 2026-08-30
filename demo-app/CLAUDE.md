@@ -156,3 +156,25 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+# Cross-repo agent isolation policy
+
+This app (`demo-app`) consumes `lobstar/bpm-engine` as a local Composer
+path dependency (`vendor/lobstar/bpm-engine` is a symlink to the sibling
+`/package` repo). Agents working in this repo must build against the
+package's **documented, stable public signatures only** (arc42 Section 5:
+`RevisionManager::transition()`/`rollback()`, `QueueDispatcher`,
+`DmnEvaluator::evaluate()`, etc.) — do not read
+`vendor/lobstar/bpm-engine/AGENT_INSTRUCTIONS.md`, its ADRs, or its `src/`
+beyond those signatures to inform work here.
+
+**Why:** this app exists to exercise the package the way a real external
+consumer would. An agent that peeks at the package's internal planning
+notes or implementation can silently paper over a contract mismatch
+instead of surfacing it — defeating the point of the exercise. If
+something needed isn't covered by the documented API, stop and report the
+gap (see this repo's own `AGENT_INSTRUCTIONS.md`) rather than reading
+across the boundary to work around it.
+
+The mirror-image policy lives in `/package/CLAUDE.md` for agents working
+on the package side.

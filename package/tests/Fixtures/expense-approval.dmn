@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="definitions_expense_dmn"
+             name="Expense Approval Decisions"
+             namespace="http://example.com/dmn">
+  <decision id="decision_requires_approval" name="Requires Manager Approval">
+    <decisionTable id="dt_requires_approval" hitPolicy="FIRST">
+      <input id="input_amount" label="Amount">
+        <inputExpression id="ie_amount" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="output_requires_approval" name="requiresManagerApproval" typeRef="boolean"/>
+      <rule id="rule_1">
+        <inputEntry id="ie_1"><text>&lt;= 100</text></inputEntry>
+        <outputEntry id="oe_1"><text>false</text></outputEntry>
+      </rule>
+      <rule id="rule_2">
+        <inputEntry id="ie_2"><text>-</text></inputEntry>
+        <outputEntry id="oe_2"><text>true</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

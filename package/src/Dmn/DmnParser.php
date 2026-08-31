@@ -20,11 +20,16 @@ class DmnParser
 
         $xpath = new \DOMXPath($document);
 
-        $decisionTable = $this->queryElements($xpath, ['decisionTable'], $document)[0] ?? null;
+        $decisionTables = $this->queryElements($xpath, ['decisionTable'], $document);
 
-        if ($decisionTable === null) {
-            throw new \InvalidArgumentException('DMN XML has no decisionTable.');
+        if (count($decisionTables) !== 1) {
+            throw new \InvalidArgumentException(sprintf(
+                'DMN XML must have exactly one decisionTable; found %d.',
+                count($decisionTables)
+            ));
         }
+
+        $decisionTable = $decisionTables[0];
 
         $hitPolicy = $decisionTable->getAttribute('hitPolicy') ?: 'FIRST';
 

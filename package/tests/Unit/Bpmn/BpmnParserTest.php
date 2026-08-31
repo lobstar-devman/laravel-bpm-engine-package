@@ -46,3 +46,18 @@ it('throws for XML with no start event', function () {
 
     (new BpmnParser)->parse($xml);
 })->throws(InvalidArgumentException::class);
+
+it('throws for XML with more than one start event', function () {
+    $xml = <<<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+      <process id="ambiguous">
+        <startEvent id="start_1"/>
+        <startEvent id="start_2"/>
+        <task id="task_only" name="Only Task"/>
+      </process>
+    </definitions>
+    XML;
+
+    (new BpmnParser)->parse($xml);
+})->throws(InvalidArgumentException::class);

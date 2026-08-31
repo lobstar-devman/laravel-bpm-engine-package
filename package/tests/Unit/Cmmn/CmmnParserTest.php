@@ -42,6 +42,24 @@ it('throws for XML with no planItem', function () {
     (new CmmnParser)->parse($xml);
 })->throws(InvalidArgumentException::class);
 
+it('throws when more than one plan item has no entry criterion (ambiguous start)', function () {
+    $xml = <<<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL">
+      <case id="ambiguous">
+        <casePlanModel id="cpm_ambiguous">
+          <planItem id="pi_a" definitionRef="task_a"/>
+          <planItem id="pi_b" definitionRef="task_b"/>
+          <humanTask id="task_a" name="Task A"/>
+          <humanTask id="task_b" name="Task B"/>
+        </casePlanModel>
+      </case>
+    </definitions>
+    XML;
+
+    (new CmmnParser)->parse($xml);
+})->throws(InvalidArgumentException::class);
+
 it('throws when every plan item has an entry criterion (no start candidate)', function () {
     $xml = <<<'XML'
     <?xml version="1.0" encoding="UTF-8"?>

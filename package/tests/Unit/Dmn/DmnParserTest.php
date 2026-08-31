@@ -29,3 +29,25 @@ it('throws for XML with no decisionTable', function () {
 
     (new DmnParser)->parse($xml);
 })->throws(InvalidArgumentException::class);
+
+it('throws for XML with more than one decisionTable', function () {
+    $xml = <<<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/">
+      <decision id="decision_1" name="Decision 1">
+        <decisionTable id="dt_1" hitPolicy="FIRST">
+          <output id="output_1" name="result"/>
+          <rule id="rule_1"><outputEntry><text>true</text></outputEntry></rule>
+        </decisionTable>
+      </decision>
+      <decision id="decision_2" name="Decision 2">
+        <decisionTable id="dt_2" hitPolicy="FIRST">
+          <output id="output_2" name="result"/>
+          <rule id="rule_2"><outputEntry><text>false</text></outputEntry></rule>
+        </decisionTable>
+      </decision>
+    </definitions>
+    XML;
+
+    (new DmnParser)->parse($xml);
+})->throws(InvalidArgumentException::class);

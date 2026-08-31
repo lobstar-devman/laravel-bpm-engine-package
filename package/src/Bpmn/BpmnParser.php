@@ -40,18 +40,22 @@ class BpmnParser
             $nodes[$element->getAttribute('id')] = $this->toNode($element, 'endEvent', $roleByNodeId);
         }
 
-        $startNodeId = null;
+        $startEventIds = [];
 
         foreach ($nodes as $node) {
             if ($node->type === 'startEvent') {
-                $startNodeId = $node->id;
-                break;
+                $startEventIds[] = $node->id;
             }
         }
 
-        if ($startNodeId === null) {
-            throw new \InvalidArgumentException('BPMN XML has no start event.');
+        if (count($startEventIds) !== 1) {
+            throw new \InvalidArgumentException(sprintf(
+                'BPMN XML must have exactly one start event; found %d.',
+                count($startEventIds)
+            ));
         }
+
+        $startNodeId = $startEventIds[0];
 
         $flows = [];
 

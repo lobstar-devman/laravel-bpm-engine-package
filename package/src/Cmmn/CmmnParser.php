@@ -76,8 +76,11 @@ class CmmnParser
 
         $startCandidates = array_values(array_diff(array_keys($nodes), $targetsWithEntryCriterion));
 
-        if ($startCandidates === []) {
-            throw new \InvalidArgumentException('CMMN XML has no plan item without an entry criterion to start from.');
+        if (count($startCandidates) !== 1) {
+            throw new \InvalidArgumentException(sprintf(
+                'CMMN XML must have exactly one plan item with no entry criterion to start from; found %d.',
+                count($startCandidates)
+            ));
         }
 
         return new CmmnCaseModel($nodes, $transitions, $startCandidates[0]);

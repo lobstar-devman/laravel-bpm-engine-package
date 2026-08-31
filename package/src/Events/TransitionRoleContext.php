@@ -21,6 +21,5 @@ class TransitionRoleContext
         public readonly string $event,
         public readonly string $standard,
         public readonly ?string $role,
-    ) {
-    }
+    ) {}
 }

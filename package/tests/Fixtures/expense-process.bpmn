@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="definitions_expense"
+             targetNamespace="http://example.com/bpmn">
+  <process id="expense_process" name="Expense Approval" isExecutable="true">
+    <laneSet id="lanes_expense">
+      <lane id="lane_reviewer" name="Reviewer">
+        <flowNodeRef>task_review</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="start_1" name="Submitted"/>
+    <task id="task_review" name="Review Expense"/>
+    <endEvent id="end_1" name="Approved"/>
+    <sequenceFlow id="flow_1" sourceRef="start_1" targetRef="task_review"/>
+    <sequenceFlow id="flow_2" sourceRef="task_review" targetRef="end_1" name="approve"/>
+  </process>
+</definitions>

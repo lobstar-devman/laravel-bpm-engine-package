@@ -9,9 +9,7 @@ namespace Lobstar\BpmEngine\Core;
  */
 class QueueDispatcher
 {
-    public function __construct(protected int $batchSize = 1000)
-    {
-    }
+    public function __construct(protected int $batchSize = 1000) {}
 
     public function dispatchBulk(iterable $instances, string $event): void
     {

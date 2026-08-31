@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             id="definitions_expense_dispute"
+             targetNamespace="http://example.com/cmmn">
+  <case id="expense_dispute_case" name="Expense Dispute">
+    <casePlanModel id="cpm_1" name="Expense Dispute">
+      <planItem id="pi_review" definitionRef="task_review" name="Review Dispute"/>
+      <planItem id="pi_resolve" definitionRef="task_resolve" name="Resolve Dispute">
+        <entryCriterion sentryRef="sentry_1"/>
+      </planItem>
+      <sentry id="sentry_1">
+        <planItemOnPart sourceRef="pi_review">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      <humanTask id="task_review" name="Review Dispute" performerRef="role_reviewer"/>
+      <humanTask id="task_resolve" name="Resolve Dispute" performerRef="role_manager"/>
+    </casePlanModel>
+    <caseRoles>
+      <role id="role_reviewer" name="Reviewer"/>
+      <role id="role_manager" name="Manager"/>
+    </caseRoles>
+  </case>
+</definitions>

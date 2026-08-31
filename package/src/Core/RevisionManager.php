@@ -5,6 +5,8 @@ namespace Lobstar\BpmEngine\Core;
 use Illuminate\Contracts\Events\Dispatcher;
 use Lobstar\BpmEngine\Bpmn\BpmnInterpreter;
 use Lobstar\BpmEngine\Bpmn\BpmnProcessModel;
+use Lobstar\BpmEngine\Cmmn\CmmnCaseModel;
+use Lobstar\BpmEngine\Cmmn\CmmnInterpreter;
 use Lobstar\BpmEngine\Events\TransitionRoleContext;
 use Lobstar\BpmEngine\Models\Instance;
 use Lobstar\BpmEngine\Models\ModelRevision;
@@ -30,6 +32,7 @@ class RevisionManager
         protected ModelRegistry $modelRegistry,
         protected EventStore $eventStore,
         protected BpmnInterpreter $bpmnInterpreter,
+        protected CmmnInterpreter $cmmnInterpreter,
         protected Dispatcher $events,
     ) {}
 
@@ -44,15 +47,9 @@ class RevisionManager
         $revision = $instance->modelRevision;
         $definition = $revision->modelDefinition;
 
-        if ($definition->standard !== 'bpmn') {
-            throw new \RuntimeException(
-                "RevisionManager::transition() only supports the [bpmn] standard currently; got [{$definition->standard}]."
-            );
-        }
-
         $model = $this->modelRegistry->resolve($definition->key, $revision->revision_number);
 
-        $newState = $this->bpmnInterpreter->drive($instance, $model, $event);
+        $newState = $this->drive($definition->standard, $instance, $model, $event);
 
         $instance->current_state = $newState;
         $instance->save();
@@ -63,7 +60,7 @@ class RevisionManager
             instance: $instance,
             event: $event,
             standard: $definition->standard,
-            role: $model instanceof BpmnProcessModel ? $model->node($newState)->role : null,
+            role: $this->roleFor($model, $newState),
         ));
 
         return $newState;
@@ -82,12 +79,6 @@ class RevisionManager
         $currentRevision = $instance->modelRevision;
         $definition = $currentRevision->modelDefinition;
 
-        if ($definition->standard !== 'bpmn') {
-            throw new \RuntimeException(
-                "RevisionManager::rollback() only supports the [bpmn] standard currently; got [{$definition->standard}]."
-            );
-        }
-
         $targetModel = $this->modelRegistry->resolve($definition->key, $targetRevision);
 
         $targetRevisionModel = ModelRevision::where('model_definition_id', $definition->id)
@@ -96,7 +87,7 @@ class RevisionManager
 
         $history = $this->eventStore->history($instance);
 
-        $restoredState = $this->recompute($targetModel, $history);
+        $restoredState = $this->recompute($definition->standard, $targetModel, $history);
 
         $instance->model_revision_id = $targetRevisionModel->id;
         $instance->current_state = $restoredState;
@@ -112,7 +103,7 @@ class RevisionManager
             instance: $instance,
             event: self::ROLLBACK_EVENT_TYPE,
             standard: $definition->standard,
-            role: $targetModel instanceof BpmnProcessModel ? $targetModel->node($restoredState)->role : null,
+            role: $this->roleFor($targetModel, $restoredState),
         ));
 
         return $restoredState;
@@ -121,16 +112,13 @@ class RevisionManager
     /**
      * Replays $history's recorded transitions (in order) against $model
      * from its start node, skipping prior RolledBackEvent entries — they
-     * aren't BPMN-triggering events, just markers of an earlier rollback.
+     * aren't standard-defined triggering events, just markers of an
+     * earlier rollback.
      *
      * @param  list<TransitionEvent>  $history
      */
-    private function recompute(mixed $model, array $history): string
+    private function recompute(string $standard, mixed $model, array $history): string
     {
-        if (! $model instanceof BpmnProcessModel) {
-            throw new \InvalidArgumentException('RevisionManager::recompute() requires a parsed BpmnProcessModel.');
-        }
-
         $cursor = new \stdClass;
         $cursor->current_state = null;
 
@@ -139,10 +127,40 @@ class RevisionManager
                 continue;
             }
 
-            $cursor->current_state = $this->bpmnInterpreter->drive($cursor, $model, $transitionEvent->event_type);
+            $cursor->current_state = $this->drive($standard, $cursor, $model, $transitionEvent->event_type);
         }
 
-        return $cursor->current_state ?? $model->startNodeId;
+        return $cursor->current_state ?? $this->startNodeIdOf($model);
+    }
+
+    /** Dispatches to the standard-appropriate Interpreter. */
+    private function drive(string $standard, mixed $instance, mixed $model, string $event): string
+    {
+        return match ($standard) {
+            'bpmn' => $this->bpmnInterpreter->drive($instance, $model, $event),
+            'cmmn' => $this->cmmnInterpreter->drive($instance, $model, $event),
+            default => throw new \RuntimeException(
+                "RevisionManager only supports the [bpmn]/[cmmn] standards currently; got [{$standard}]."
+            ),
+        };
+    }
+
+    private function roleFor(mixed $model, string $nodeId): ?string
+    {
+        return match (true) {
+            $model instanceof BpmnProcessModel => $model->node($nodeId)->role,
+            $model instanceof CmmnCaseModel => $model->node($nodeId)->role,
+            default => null,
+        };
+    }
+
+    private function startNodeIdOf(mixed $model): string
+    {
+        return match (true) {
+            $model instanceof BpmnProcessModel => $model->startNodeId,
+            $model instanceof CmmnCaseModel => $model->startNodeId,
+            default => throw new \InvalidArgumentException('RevisionManager::recompute() requires a parsed BpmnProcessModel or CmmnCaseModel.'),
+        };
     }
 
     private function resolveInstance(mixed $instance): Instance

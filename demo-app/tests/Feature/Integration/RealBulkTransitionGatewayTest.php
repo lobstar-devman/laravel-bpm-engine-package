@@ -14,8 +14,9 @@ use Tests\TestCase;
  * `BulkTransitionGateway::dispatchBulk()` (backed by the real
  * `QueueDispatcher`) exactly as it does in production.
  *
- * The command dispatches instance ids, not `App\Models\Instance` objects
- * — see docs/gap-analysis/instance-identity-argument-shape.md.
+ * Currently red — see docs/gap-analysis/instance-identity-argument-shape.md.
+ * `QueueDispatcher::dispatchBulk()` expects each instance's raw id, not
+ * the `App\Models\Instance` objects this command actually passes.
  */
 class RealBulkTransitionGatewayTest extends TestCase
 {

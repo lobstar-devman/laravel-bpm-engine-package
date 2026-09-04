@@ -28,4 +28,22 @@ final class BpmnProcessModel
             fn (BpmnFlow $flow): bool => $flow->source === $nodeId,
         ));
     }
+
+    /** The model's canonical vocabulary — see BpmnVocabulary and ADR-012. */
+    public function vocabulary(): BpmnVocabulary
+    {
+        $nodeIds = array_keys($this->nodes);
+        sort($nodeIds, SORT_STRING);
+
+        $flowNames = [];
+        foreach ($this->flows as $flow) {
+            if ($flow->name !== null) {
+                $flowNames[$flow->name] = true;
+            }
+        }
+        $flowNames = array_keys($flowNames);
+        sort($flowNames, SORT_STRING);
+
+        return new BpmnVocabulary($nodeIds, $flowNames);
+    }
 }

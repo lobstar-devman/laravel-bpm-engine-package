@@ -171,3 +171,36 @@ CMMN dispute flow yet, so nothing currently exercises this value against
 the real interpreter. Flagged as a follow-up: add a real CMMN
 integration test analogous to `RealRevisionGatewayTest` before relying
 on this value in production.
+
+## Resolution: `BpmnProcessModel::vocabulary()` closes item 3 of "what's missing" (BPMN only)
+
+Item 3 above asked whether the package would ever expose valid
+state/event ids per model revision instead of leaving the app to guess.
+ADR-012 ("BPMN Vocabulary Hash") answers this for BPMN:
+`BpmnProcessModel::vocabulary(): BpmnVocabulary` — obtained via the
+existing `ModelDefinitionGateway::resolve()` boundary already used
+elsewhere in this app — returns the model's real, deduplicated node ids
+and sequence-flow names, plus a `hash()` for drift detection between
+revisions.
+
+`tests/Feature/Integration/RealBpmnVocabularyTest.php` uses this against
+the real package (no fakes) to:
+
+- assert every `ExpenseReportState` case's value is a real node id in
+  `resources/bpm/expense-reimbursement.bpmn.xml` — upgrading the
+  `SubmitExpense`/`Task_SubmitExpense` value from "confirmed by one
+  transition test happening to reach it" to "checked directly against
+  the model's full vocabulary," and covering the other four cases too,
+  which no real-interpreter test exercises;
+- assert every BPMN event-name literal hardcoded across the MCP tools
+  and `EscalateOverdueExpenseReports` (`submit`, `escalate_to_finance`,
+  `auto_approve`, `send_to_finance`, `reject`, `finance_reject`) is a
+  real sequence-flow name;
+- pin `vocabulary()->hash()` against a committed baseline, so a future
+  edit to the `.bpmn.xml` that silently renames or removes a node id or
+  flow name this app depends on fails this test loudly instead of
+  surfacing as a runtime `RuntimeException` mid-transition.
+
+Per ADR-012, this is BPMN-only — `ExpenseDisputeState::Open` and the
+CMMN flow are still unaddressed by the package and remain the open
+follow-up noted above.

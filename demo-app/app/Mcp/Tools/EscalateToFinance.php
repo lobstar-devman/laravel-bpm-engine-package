@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Bpm\Contracts\RevisionGateway;
+use App\Bpm\ValueObjects\InstanceId;
 use App\Models\ExpenseReport;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -37,7 +38,7 @@ class EscalateToFinance extends Tool
             return Response::error('Permission denied.');
         }
 
-        $this->revisionGateway->transition($expenseReport->instance, 'escalate_to_finance');
+        $this->revisionGateway->transition(InstanceId::fromInstance($expenseReport->instance), 'escalate_to_finance');
 
         return Response::json([
             'expense_report_id' => $expenseReport->id,

@@ -16,7 +16,7 @@
           <text>category</text>
         </inputExpression>
       </input>
-      <output id="Output_AutoApprove" label="auto_approve" typeRef="boolean" />
+      <output id="Output_AutoApprove" name="auto_approve" label="auto_approve" typeRef="boolean" />
 
       <!-- Travel expenses always require Finance review, regardless of amount. -->
       <rule id="Rule_TravelAlwaysReview">

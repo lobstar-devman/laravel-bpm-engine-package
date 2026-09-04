@@ -3,6 +3,7 @@
 namespace Tests\Feature\Integration;
 
 use App\Bpm\Contracts\ModelDefinitionGateway;
+use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,9 +15,9 @@ use Tests\TestCase;
  * `BulkTransitionGateway::dispatchBulk()` (backed by the real
  * `QueueDispatcher`) exactly as it does in production.
  *
- * Currently red — see docs/gap-analysis/instance-identity-argument-shape.md.
- * `QueueDispatcher::dispatchBulk()` expects each instance's raw id, not
- * the `App\Models\Instance` objects this command actually passes.
+ * The command builds `App\Bpm\ValueObjects\InstanceId` per instance,
+ * which the adapter unwraps to the raw id before it crosses into the
+ * package — see docs/gap-analysis/instance-identity-argument-shape.md.
  */
 class RealBulkTransitionGatewayTest extends TestCase
 {
@@ -30,7 +31,7 @@ class RealBulkTransitionGatewayTest extends TestCase
             file_get_contents(resource_path('bpm/expense-reimbursement.bpmn.xml')),
         );
 
-        $overdueInstance = Instance::factory()->withState('manager_approval')->create([
+        $overdueInstance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create([
             'model_revision_id' => $revision->id,
         ]);
         ExpenseReport::factory()->create([
@@ -40,6 +41,6 @@ class RealBulkTransitionGatewayTest extends TestCase
 
         $this->artisan('expenses:escalate-overdue')->assertExitCode(0);
 
-        $this->assertNotSame('manager_approval', $overdueInstance->fresh()->current_state);
+        $this->assertNotSame(ExpenseReportState::ManagerApproval->value, $overdueInstance->fresh()->current_state);
     }
 }

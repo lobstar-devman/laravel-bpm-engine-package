@@ -16,9 +16,14 @@ use Tests\TestCase;
  * DmnEvaluator, checking outcomes against the rules documented in that
  * XML rather than against package internals.
  *
- * Currently red — see docs/gap-analysis/dmn-evaluator-model-conversion.md.
- * `DmnEvaluator::evaluate()` throws when given the value
- * `ModelRegistry::resolve()` itself returns for a `dmn` key.
+ * See docs/gap-analysis/dmn-evaluator-model-conversion.md for the full
+ * history: the original crash (given `ModelRegistry::resolve()`'s
+ * output for a `dmn` key) and a since-fixed DMN-authoring bug (this
+ * app's `<output>` element had no `name` attribute, only `label`) are
+ * both resolved. `DmnEvaluator::evaluate()` writes its own Decision Log
+ * row internally (per the package's ADR-009) with `instance_id` always
+ * `null` — there is currently no documented way to correlate a decision
+ * to a specific instance.
  */
 class RealDecisionGatewayTest extends TestCase
 {
@@ -71,7 +76,7 @@ class RealDecisionGatewayTest extends TestCase
         $this->assertFalse($service->evaluate($expenseReport));
     }
 
-    public function test_it_writes_a_decision_log_row_with_a_resolvable_revision_id(): void
+    public function test_the_package_writes_its_own_decision_log_row(): void
     {
         $expenseReport = ExpenseReport::factory()->create([
             'amount' => 42.50,
@@ -82,7 +87,7 @@ class RealDecisionGatewayTest extends TestCase
 
         $decisionLog = DecisionLog::sole();
         $this->assertNotNull($decisionLog->model_revision_id);
-        $this->assertSame($expenseReport->instance_id, $decisionLog->instance_id);
-        $this->assertArrayHasKey('auto_approve', $decisionLog->outputs);
+        $this->assertNull($decisionLog->instance_id, 'DmnEvaluator hardcodes instance_id to null — see docs/gap-analysis/dmn-evaluator-model-conversion.md.');
+        $this->assertSame(['auto_approve' => true], $decisionLog->outputs);
     }
 }

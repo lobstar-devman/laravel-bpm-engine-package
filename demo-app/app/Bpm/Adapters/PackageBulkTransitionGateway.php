@@ -11,6 +11,12 @@ class PackageBulkTransitionGateway implements BulkTransitionGateway
 
     public function dispatchBulk(iterable $instances, string $event): void
     {
-        $this->queueDispatcher->dispatchBulk($instances, $event);
+        $ids = [];
+
+        foreach ($instances as $instance) {
+            $ids[] = (string) $instance;
+        }
+
+        $this->queueDispatcher->dispatchBulk($ids, $event);
     }
 }

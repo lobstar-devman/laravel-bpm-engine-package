@@ -41,8 +41,20 @@ class DmnParser
 
         $outputNames = [];
 
-        foreach ($this->queryElements($xpath, ['output'], $decisionTable) as $output) {
-            $outputNames[] = $output->getAttribute('name');
+        foreach ($this->queryElements($xpath, ['output'], $decisionTable) as $index => $output) {
+            $name = $output->getAttribute('name');
+
+            if ($name === '') {
+                throw new \InvalidArgumentException(sprintf(
+                    'DMN output at index %d (id [%s]) must have a non-empty name attribute — '.
+                    'this is the key evaluate() returns results under, and is not the same as label, '.
+                    'which is display-only. Found none.',
+                    $index,
+                    $output->getAttribute('id') ?: '(no id)',
+                ));
+            }
+
+            $outputNames[] = $name;
         }
 
         $rules = [];

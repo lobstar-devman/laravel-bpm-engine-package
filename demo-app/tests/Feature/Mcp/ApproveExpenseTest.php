@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Mcp\Tools\ApproveExpense;
 use App\Models\ExpenseReport;
@@ -27,7 +28,7 @@ class ApproveExpenseTest extends TestCase
     public function test_the_assigned_manager_can_approve_and_it_auto_approves_under_threshold(): void
     {
         $manager = User::factory()->create(['role' => UserRole::Manager]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'manager_id' => $manager->id,
@@ -48,7 +49,7 @@ class ApproveExpenseTest extends TestCase
     public function test_it_sends_to_finance_when_over_threshold(): void
     {
         $manager = User::factory()->create(['role' => UserRole::Manager]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'manager_id' => $manager->id,
@@ -67,7 +68,7 @@ class ApproveExpenseTest extends TestCase
     {
         $manager = User::factory()->create(['role' => UserRole::Manager]);
         $otherManager = User::factory()->create(['role' => UserRole::Manager]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'manager_id' => $manager->id,

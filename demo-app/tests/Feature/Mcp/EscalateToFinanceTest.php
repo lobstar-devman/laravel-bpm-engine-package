@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Mcp\Tools\EscalateToFinance;
 use App\Models\ExpenseReport;
@@ -26,7 +27,7 @@ class EscalateToFinanceTest extends TestCase
     public function test_any_finance_user_can_escalate(): void
     {
         $finance = User::factory()->create(['role' => UserRole::Finance]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create(['instance_id' => $instance->id]);
 
         $this->actingAs($finance);
@@ -41,7 +42,7 @@ class EscalateToFinanceTest extends TestCase
     public function test_an_employee_cannot_escalate(): void
     {
         $employee = User::factory()->create(['role' => UserRole::Employee]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create(['instance_id' => $instance->id]);
 
         $this->actingAs($employee);

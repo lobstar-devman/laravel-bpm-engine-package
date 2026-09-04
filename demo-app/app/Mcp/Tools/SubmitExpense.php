@@ -5,6 +5,8 @@ namespace App\Mcp\Tools;
 use App\Bpm\Contracts\ModelDefinitionGateway;
 use App\Bpm\Contracts\RevisionGateway;
 use App\Bpm\Support\RevisionId;
+use App\Bpm\ValueObjects\InstanceId;
+use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
 use App\Models\User;
@@ -47,7 +49,7 @@ class SubmitExpense extends Tool
             $instance = Instance::create([
                 'model_revision_id' => RevisionId::from($revision),
                 'type' => 'process',
-                'current_state' => 'submitted',
+                'current_state' => ExpenseReportState::SubmitExpense->value,
             ]);
 
             $expenseReport = ExpenseReport::create([
@@ -59,7 +61,7 @@ class SubmitExpense extends Tool
                 'submitted_at' => now(),
             ]);
 
-            $this->revisionGateway->transition($instance, 'submit');
+            $this->revisionGateway->transition(InstanceId::fromInstance($instance), 'submit');
 
             return $expenseReport;
         });

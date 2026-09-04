@@ -9,12 +9,12 @@ class FakeDecisionGateway implements DecisionGateway
     /** @var array<string, mixed> */
     public array $result = ['auto_approve' => false];
 
-    /** @var array<int, array{model: mixed, inputData: array<string, mixed>}> */
+    /** @var array<int, array{decisionKey: string, inputData: array<string, mixed>}> */
     public array $calls = [];
 
-    public function evaluate(mixed $model, array $inputData): array
+    public function evaluate(string $decisionKey, array $inputData): array
     {
-        $this->calls[] = ['model' => $model, 'inputData' => $inputData];
+        $this->calls[] = ['decisionKey' => $decisionKey, 'inputData' => $inputData];
 
         return $this->result;
     }

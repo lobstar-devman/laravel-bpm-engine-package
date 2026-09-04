@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ExpenseDisputeState;
 use App\Models\ExpenseDispute;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
@@ -21,7 +22,7 @@ class ExpenseDisputeFactory extends Factory
     public function definition(): array
     {
         return [
-            'instance_id' => Instance::factory()->case()->withState('open'),
+            'instance_id' => Instance::factory()->case()->withState(ExpenseDisputeState::Open),
             'expense_report_id' => ExpenseReport::factory(),
             'opened_by' => User::factory(),
         ];

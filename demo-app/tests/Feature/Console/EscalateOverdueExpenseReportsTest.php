@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
 use App\Models\ModelRevision;
@@ -25,13 +26,13 @@ class EscalateOverdueExpenseReportsTest extends TestCase
         $revisionA = ModelRevision::factory()->create();
         $revisionB = ModelRevision::factory()->create();
 
-        $overdueInstanceA = Instance::factory()->withState('manager_approval')
+        $overdueInstanceA = Instance::factory()->withState(ExpenseReportState::ManagerApproval)
             ->create(['model_revision_id' => $revisionA->id]);
-        $overdueInstanceB = Instance::factory()->withState('manager_approval')
+        $overdueInstanceB = Instance::factory()->withState(ExpenseReportState::ManagerApproval)
             ->create(['model_revision_id' => $revisionB->id]);
-        $notOverdueInstance = Instance::factory()->withState('manager_approval')
+        $notOverdueInstance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)
             ->create(['model_revision_id' => $revisionA->id]);
-        $terminalInstance = Instance::factory()->withState('paid')
+        $terminalInstance = Instance::factory()->withState(ExpenseReportState::Paid)
             ->create(['model_revision_id' => $revisionA->id]);
 
         $overdueA = ExpenseReport::factory()->create([
@@ -62,7 +63,7 @@ class EscalateOverdueExpenseReportsTest extends TestCase
         }
 
         $dispatchedInstanceIds = collect($dispatches)
-            ->flatMap(fn (array $dispatch) => collect($dispatch['instances'])->pluck('id'))
+            ->flatMap(fn (array $dispatch) => collect($dispatch['instances'])->pluck('value'))
             ->sort()
             ->values();
 
@@ -74,7 +75,7 @@ class EscalateOverdueExpenseReportsTest extends TestCase
 
     public function test_it_dispatches_nothing_when_no_reports_are_overdue(): void
     {
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
 
         ExpenseReport::factory()->create([
             'instance_id' => $instance->id,

@@ -5,6 +5,8 @@ namespace App\Mcp\Tools;
 use App\Bpm\Contracts\ModelDefinitionGateway;
 use App\Bpm\Contracts\RevisionGateway;
 use App\Bpm\Support\RevisionId;
+use App\Bpm\ValueObjects\InstanceId;
+use App\Enums\ExpenseDisputeState;
 use App\Models\ExpenseDispute;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
@@ -49,7 +51,7 @@ class OpenDispute extends Tool
             $caseInstance = Instance::create([
                 'model_revision_id' => RevisionId::from($revision),
                 'type' => 'case',
-                'current_state' => 'open',
+                'current_state' => ExpenseDisputeState::Open->value,
             ]);
 
             $dispute = ExpenseDispute::create([
@@ -59,7 +61,7 @@ class OpenDispute extends Tool
                 'evidence_summary' => $validated['evidence_summary'],
             ]);
 
-            $this->revisionGateway->transition($caseInstance, 'open_dispute');
+            $this->revisionGateway->transition(InstanceId::fromInstance($caseInstance), 'open_dispute');
 
             return $dispute;
         });

@@ -105,3 +105,63 @@ then, `tests/Feature/Integration/RealRevisionGatewayTest.php` and
 `RealBulkTransitionGatewayTest.php` are left red intentionally, mirroring
 the app's actual current production call shape, as regression/contract
 checks that will start passing once one side or the other changes.
+
+## App-side interim fix (implemented)
+
+Rather than fix the six call sites to pass a bare `$instance->id` string
+(easy to get wrong again — nothing stops the next call site from passing
+the model by mistake, the exact bug this doc describes), the app now
+introduces `App\Bpm\ValueObjects\InstanceId`: a small `readonly`,
+`Stringable` value object wrapping the instance's raw UUID, with a
+`InstanceId::fromInstance(Instance $instance)` named constructor.
+`App\Bpm\Contracts\RevisionGateway::transition()`/`rollback()` and
+`App\Bpm\Contracts\BulkTransitionGateway::dispatchBulk()` are now typed
+against `InstanceId` (instead of `mixed`/untyped `iterable`), so every
+call site must construct one explicitly. The `Package*Gateway` adapters
+are the one place that unwrap it back to `(string) $instance` before
+calling into `RevisionManager`/`QueueDispatcher` — preserving the exact
+raw-string shape confirmed correct above.
+
+This closes the "passed the whole model by mistake" bug class via PHP's
+type system at every one of this app's own call sites. It's scoped to
+`/app` only — nothing in `/package` was touched, and the package's own
+`RevisionManager`/`QueueDispatcher` signatures are still `mixed`/untyped
+`iterable`, so nothing stops a *different* consumer from making the same
+mistake, since the package itself does no shape enforcement.
+
+## Proposed package-side contract
+
+For the package to close this gap for every consumer, not just this app,
+it could define a small contract of its own, e.g.:
+
+```php
+namespace Lobstar\BpmEngine\Contracts;
+
+interface Identifiable extends \Stringable {}
+```
+
+and retype `RevisionManager::transition(Identifiable $instance, string
+$event)`, `rollback(Identifiable $instance, int $targetRevision)`, and
+`QueueDispatcher::dispatchBulk(iterable $instances, string $event)` with
+a documented element type of `Identifiable`, coercing internally via
+`(string) $instance` wherever it currently does its own lookup.
+
+Deliberately **not** `Identifiable|string`: this would be a brand-new
+contract, not a change to an already-established one, and as far as we
+know this app is the package's only consumer today, so there's no real
+backward-compatibility constraint to protect. A `|string` escape hatch
+would also undercut the whole point — a bare, un-vetted string could
+still slip through, which is exactly the ambiguity this value object
+exists to close.
+
+This contract has zero footprint in the arc42 docs today — Section 5's
+prose and Section 6's sequence diagrams both use bare, untyped
+`entity`/`entities` names, and none of the 11 ADRs address identifier
+shape. If this proposal is adopted, it should get a Section 5 entry and
+an ADR of its own, the same way ADR-005/006 already record other
+cross-cutting, hard-to-reverse contract decisions.
+
+**Migration path once available:** `App\Bpm\ValueObjects\InstanceId`
+would `implement Lobstar\BpmEngine\Contracts\Identifiable`, and the
+`Package*Gateway` adapters could drop their manual `(string)` casts,
+passing the value object straight through instead.

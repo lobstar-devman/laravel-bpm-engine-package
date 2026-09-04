@@ -27,10 +27,22 @@ class DmnEvaluator
         private readonly ModelRegistry $modelRegistry,
     ) {}
 
-    /** @param string $model the decision's key, as passed to ModelRegistry::resolve()/store() */
+    /**
+     * $model is the decision's key (string), as passed to
+     * ModelRegistry::resolve()/store() — not a resolved model. Declared
+     * mixed (not string) precisely so a wrong type is caught below with
+     * a clear message instead of PHP's own type-coercion error.
+     */
     public function evaluate(mixed $model, array $inputData): array
     {
-        $decisionKey = (string) $model;
+        if (! is_string($model)) {
+            throw new \InvalidArgumentException(
+                'DmnEvaluator::evaluate() takes the decision key (string), as passed to ModelRegistry::resolve()/store() — '
+                .'not a resolved model. DmnEvaluator resolves the model itself; see Section 6, "Evaluate a DMN decision table".'
+            );
+        }
+
+        $decisionKey = $model;
 
         $definition = ModelDefinition::where('key', $decisionKey)->firstOrFail();
 

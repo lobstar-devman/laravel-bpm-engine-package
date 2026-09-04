@@ -3,44 +3,28 @@
 namespace App\Domain\Expenses\Services;
 
 use App\Bpm\Contracts\DecisionGateway;
-use App\Bpm\Contracts\ModelDefinitionGateway;
-use App\Bpm\Support\RevisionId;
-use App\Models\DecisionLog;
 use App\Models\ExpenseReport;
 
 /**
  * Orchestrates the "Evaluate Auto-Approval Threshold" business-rule
- * step: resolves the current DMN revision, evaluates it, and writes the
- * Decision Log row. Called from the app rather than left to
- * BpmnInterpreter to invoke internally — the docs list
- * DmnEvaluator::evaluate() as separate public API and omit
- * BpmnInterpreter/CmmnInterpreter from the "build against this" list.
- * This is an assumption to re-verify once the package is unstubbed.
+ * step: evaluates the DMN decision by key (DmnEvaluator resolves the
+ * current revision internally). `DmnEvaluator::evaluate()` writes its
+ * own Decision Log row internally (per the package's ADR-009) — this
+ * app must not write a second one; see
+ * docs/gap-analysis/dmn-evaluator-model-conversion.md.
  */
 class AutoApprovalDecisionService
 {
-    public function __construct(
-        protected ModelDefinitionGateway $modelDefinitionGateway,
-        protected DecisionGateway $decisionGateway,
-    ) {}
+    public function __construct(protected DecisionGateway $decisionGateway) {}
 
     public function evaluate(ExpenseReport $expenseReport): bool
     {
-        $revision = $this->modelDefinitionGateway->resolve('auto_approval_threshold');
-
         $inputs = [
             'amount' => (float) $expenseReport->amount,
             'category' => $expenseReport->category,
         ];
 
-        $outputs = $this->decisionGateway->evaluate($revision, $inputs);
-
-        DecisionLog::create([
-            'model_revision_id' => RevisionId::from($revision),
-            'instance_id' => $expenseReport->instance_id,
-            'inputs' => $inputs,
-            'outputs' => $outputs,
-        ]);
+        $outputs = $this->decisionGateway->evaluate('auto_approval_threshold', $inputs);
 
         return (bool) ($outputs['auto_approve'] ?? false);
     }

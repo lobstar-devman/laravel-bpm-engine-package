@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Models\ExpenseReport;
 use App\Models\User;
@@ -17,26 +18,26 @@ class ExpenseReportPolicy
     {
         return $user->hasRole(UserRole::Manager)
             && $user->id === $expenseReport->manager_id
-            && $expenseReport->currentState === 'manager_approval';
+            && $expenseReport->currentState === ExpenseReportState::ManagerApproval;
     }
 
     public function reject(User $user, ExpenseReport $expenseReport): bool
     {
         return $user->hasRole(UserRole::Manager)
             && $user->id === $expenseReport->manager_id
-            && $expenseReport->currentState === 'manager_approval';
+            && $expenseReport->currentState === ExpenseReportState::ManagerApproval;
     }
 
     public function financeApprove(User $user, ExpenseReport $expenseReport): bool
     {
         return $user->hasRole(UserRole::Finance)
-            && $expenseReport->currentState === 'finance_review';
+            && $expenseReport->currentState === ExpenseReportState::FinanceReview;
     }
 
     public function financeReject(User $user, ExpenseReport $expenseReport): bool
     {
         return $user->hasRole(UserRole::Finance)
-            && $expenseReport->currentState === 'finance_review';
+            && $expenseReport->currentState === ExpenseReportState::FinanceReview;
     }
 
     /**
@@ -45,7 +46,7 @@ class ExpenseReportPolicy
      */
     public function escalate(User $user, ExpenseReport $expenseReport): bool
     {
-        if ($expenseReport->currentState !== 'manager_approval') {
+        if ($expenseReport->currentState !== ExpenseReportState::ManagerApproval) {
             return false;
         }
 

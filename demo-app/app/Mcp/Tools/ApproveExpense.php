@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Bpm\Contracts\RevisionGateway;
+use App\Bpm\ValueObjects\InstanceId;
 use App\Domain\Expenses\Services\AutoApprovalDecisionService;
 use App\Models\ExpenseReport;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -38,7 +39,7 @@ class ApproveExpense extends Tool
         $autoApprove = $this->autoApprovalDecisionService->evaluate($expenseReport);
 
         $this->revisionGateway->transition(
-            $expenseReport->instance,
+            InstanceId::fromInstance($expenseReport->instance),
             $autoApprove ? 'auto_approve' : 'send_to_finance',
         );
 

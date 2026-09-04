@@ -3,19 +3,20 @@
 namespace App\Bpm\Adapters;
 
 use App\Bpm\Contracts\RevisionGateway;
+use App\Bpm\ValueObjects\InstanceId;
 use Lobstar\BpmEngine\Core\RevisionManager;
 
 class PackageRevisionGateway implements RevisionGateway
 {
     public function __construct(protected RevisionManager $revisionManager) {}
 
-    public function transition(mixed $instance, string $event): mixed
+    public function transition(InstanceId $instance, string $event): mixed
     {
-        return $this->revisionManager->transition($instance, $event);
+        return $this->revisionManager->transition((string) $instance, $event);
     }
 
-    public function rollback(mixed $instance, int $targetRevision): mixed
+    public function rollback(InstanceId $instance, int $targetRevision): mixed
     {
-        return $this->revisionManager->rollback($instance, $targetRevision);
+        return $this->revisionManager->rollback((string) $instance, $targetRevision);
     }
 }

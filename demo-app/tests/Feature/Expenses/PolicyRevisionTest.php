@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Expenses;
 
+use App\Bpm\ValueObjects\InstanceId;
+use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,7 +44,7 @@ class PolicyRevisionTest extends TestCase
         );
         $this->assertSame(1, $revisionA->revision_number);
 
-        $instanceA = Instance::factory()->withState('manager_approval')->create([
+        $instanceA = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create([
             'model_revision_id' => $revisionA->id,
         ]);
 
@@ -64,23 +66,23 @@ class PolicyRevisionTest extends TestCase
         $revisionB = $this->fakeModelDefinitionGateway->store('dmn', 'auto_approval_threshold', '<v2/>');
 
         // A: submitted under the old revision, still in flight — needs rollback.
-        $inFlightOnOldRevision = Instance::factory()->withState('manager_approval')
+        $inFlightOnOldRevision = Instance::factory()->withState(ExpenseReportState::ManagerApproval)
             ->create(['model_revision_id' => $revisionA->id]);
         $expenseA = ExpenseReport::factory()->create(['instance_id' => $inFlightOnOldRevision->id]);
 
         // B: submitted under the old revision, but already terminal — excluded.
-        $terminalOnOldRevision = Instance::factory()->withState('paid')
+        $terminalOnOldRevision = Instance::factory()->withState(ExpenseReportState::Paid)
             ->create(['model_revision_id' => $revisionA->id]);
         ExpenseReport::factory()->create(['instance_id' => $terminalOnOldRevision->id]);
 
         // C: submitted under the new revision already — excluded.
-        $inFlightOnNewRevision = Instance::factory()->withState('manager_approval')
+        $inFlightOnNewRevision = Instance::factory()->withState(ExpenseReportState::ManagerApproval)
             ->create(['model_revision_id' => $revisionB->id]);
         ExpenseReport::factory()->create(['instance_id' => $inFlightOnNewRevision->id]);
 
         $needingRollback = ExpenseReport::query()
             ->whereHas('instance', fn ($instances) => $instances->where('model_revision_id', $revisionA->id))
-            ->whereHas('instance', fn ($instances) => $instances->whereNotIn('current_state', ['paid', 'rejected']))
+            ->whereHas('instance', fn ($instances) => $instances->whereNotIn('current_state', [ExpenseReportState::Paid, ExpenseReportState::Rejected]))
             ->get();
 
         $this->assertCount(1, $needingRollback);
@@ -92,15 +94,15 @@ class PolicyRevisionTest extends TestCase
         $revisionA = $this->fakeModelDefinitionGateway->store('dmn', 'auto_approval_threshold', '<v1/>');
         $this->fakeModelDefinitionGateway->store('dmn', 'auto_approval_threshold', '<v2/>');
 
-        $instance = Instance::factory()->withState('manager_approval')->create([
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create([
             'model_revision_id' => $revisionA->id,
         ]);
         $expenseReport = ExpenseReport::factory()->create(['instance_id' => $instance->id]);
 
-        $this->fakeRevisionGateway->rollback($expenseReport->instance, $revisionA->revision_number);
+        $this->fakeRevisionGateway->rollback(InstanceId::fromInstance($expenseReport->instance), $revisionA->revision_number);
 
         $this->assertCount(1, $this->fakeRevisionGateway->rollbacks);
-        $this->assertSame($instance->id, $this->fakeRevisionGateway->rollbacks[0]['instance']->id);
+        $this->assertSame($instance->id, $this->fakeRevisionGateway->rollbacks[0]['instance']->value);
         $this->assertSame(1, $this->fakeRevisionGateway->rollbacks[0]['targetRevision']);
     }
 }

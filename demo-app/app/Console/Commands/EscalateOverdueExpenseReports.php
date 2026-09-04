@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Bpm\Contracts\BulkTransitionGateway;
+use App\Bpm\ValueObjects\InstanceId;
+use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Support\BusinessDays;
 use Illuminate\Console\Attributes\Description;
@@ -22,7 +24,7 @@ class EscalateOverdueExpenseReports extends Command
         $cutoff = BusinessDays::subtract(Carbon::now()->toImmutable(), 5);
 
         $overdue = ExpenseReport::query()
-            ->whereHas('instance', fn ($instances) => $instances->where('current_state', 'manager_approval'))
+            ->whereHas('instance', fn ($instances) => $instances->where('current_state', ExpenseReportState::ManagerApproval))
             ->where('submitted_at', '<=', $cutoff)
             ->with('instance')
             ->get();
@@ -32,7 +34,7 @@ class EscalateOverdueExpenseReports extends Command
         $overdue->groupBy(fn (ExpenseReport $expenseReport) => $expenseReport->instance->model_revision_id)
             ->each(function ($group) use ($bulkTransitionGateway) {
                 $bulkTransitionGateway->dispatchBulk(
-                    $group->map(fn (ExpenseReport $expenseReport) => $expenseReport->instance),
+                    $group->map(fn (ExpenseReport $expenseReport): InstanceId => InstanceId::fromInstance($expenseReport->instance)),
                     'escalate_to_finance',
                 );
             });

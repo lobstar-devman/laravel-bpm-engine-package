@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Mcp\Tools\OpenDispute;
 use App\Models\ExpenseDispute;
@@ -28,7 +29,7 @@ class OpenDisputeTest extends TestCase
     public function test_the_submitter_can_open_a_dispute_on_a_rejected_expense(): void
     {
         $employee = User::factory()->create(['role' => UserRole::Employee]);
-        $instance = Instance::factory()->withState('rejected')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::Rejected)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'submitter_id' => $employee->id,
@@ -54,7 +55,7 @@ class OpenDisputeTest extends TestCase
     public function test_a_dispute_cannot_be_opened_on_a_non_rejected_expense(): void
     {
         $employee = User::factory()->create(['role' => UserRole::Employee]);
-        $instance = Instance::factory()->withState('paid')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::Paid)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'submitter_id' => $employee->id,
@@ -76,7 +77,7 @@ class OpenDisputeTest extends TestCase
     {
         $employee = User::factory()->create(['role' => UserRole::Employee]);
         $otherEmployee = User::factory()->create(['role' => UserRole::Employee]);
-        $instance = Instance::factory()->withState('rejected')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::Rejected)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'submitter_id' => $employee->id,

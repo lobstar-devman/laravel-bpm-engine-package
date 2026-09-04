@@ -2,8 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Enums\ExpenseDisputeState;
+use App\Enums\ExpenseReportState;
 use App\Models\Instance;
 use App\Models\ModelRevision;
+use BackedEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -23,7 +26,7 @@ class InstanceFactory extends Factory
             'id' => (string) Str::uuid(),
             'model_revision_id' => ModelRevision::factory(),
             'type' => 'process',
-            'current_state' => 'manager_approval',
+            'current_state' => ExpenseReportState::ManagerApproval->value,
         ];
     }
 
@@ -37,8 +40,8 @@ class InstanceFactory extends Factory
         return $this->state(['type' => 'case']);
     }
 
-    public function withState(string $state): static
+    public function withState(ExpenseReportState|ExpenseDisputeState|string $state): static
     {
-        return $this->state(['current_state' => $state]);
+        return $this->state(['current_state' => $state instanceof BackedEnum ? $state->value : $state]);
     }
 }

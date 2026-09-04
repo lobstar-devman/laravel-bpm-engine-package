@@ -30,6 +30,22 @@ it('throws for XML with no decisionTable', function () {
     (new DmnParser)->parse($xml);
 })->throws(InvalidArgumentException::class);
 
+it('throws for an output with no name attribute, rather than silently keying results by an empty string', function () {
+    $xml = <<<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/">
+      <decision id="decision_1" name="Decision 1">
+        <decisionTable id="dt_1" hitPolicy="FIRST">
+          <output id="output_1" label="Auto Approve"/>
+          <rule id="rule_1"><outputEntry><text>true</text></outputEntry></rule>
+        </decisionTable>
+      </decision>
+    </definitions>
+    XML;
+
+    (new DmnParser)->parse($xml);
+})->throws(InvalidArgumentException::class, 'must have a non-empty name attribute');
+
 it('throws for XML with more than one decisionTable', function () {
     $xml = <<<'XML'
     <?xml version="1.0" encoding="UTF-8"?>

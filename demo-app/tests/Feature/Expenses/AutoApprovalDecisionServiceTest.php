@@ -3,7 +3,6 @@
 namespace Tests\Feature\Expenses;
 
 use App\Domain\Expenses\Services\AutoApprovalDecisionService;
-use App\Models\DecisionLog;
 use App\Models\ExpenseReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\UsesFakeBpmGateways;
@@ -20,9 +19,8 @@ class AutoApprovalDecisionServiceTest extends TestCase
         $this->setUpFakeBpmGateways();
     }
 
-    public function test_it_writes_a_decision_log_and_returns_the_auto_approve_flag(): void
+    public function test_it_evaluates_by_decision_key_and_returns_the_auto_approve_flag(): void
     {
-        $revision = $this->fakeModelDefinitionGateway->store('dmn', 'auto_approval_threshold', '<definitions/>');
         $this->fakeDecisionGateway->result = ['auto_approve' => true];
 
         $expenseReport = ExpenseReport::factory()->create([
@@ -37,18 +35,13 @@ class AutoApprovalDecisionServiceTest extends TestCase
         $this->assertTrue($result);
 
         $this->assertCount(1, $this->fakeDecisionGateway->calls);
+        $this->assertSame('auto_approval_threshold', $this->fakeDecisionGateway->calls[0]['decisionKey']);
         $this->assertSame(42.50, $this->fakeDecisionGateway->calls[0]['inputData']['amount']);
         $this->assertSame('software', $this->fakeDecisionGateway->calls[0]['inputData']['category']);
-
-        $decisionLog = DecisionLog::sole();
-        $this->assertSame($revision->id, $decisionLog->model_revision_id);
-        $this->assertSame($expenseReport->instance_id, $decisionLog->instance_id);
-        $this->assertSame(['auto_approve' => true], $decisionLog->outputs);
     }
 
     public function test_it_returns_false_when_the_decision_omits_auto_approve(): void
     {
-        $this->fakeModelDefinitionGateway->store('dmn', 'auto_approval_threshold', '<definitions/>');
         $this->fakeDecisionGateway->result = ['auto_approve' => false];
 
         $expenseReport = ExpenseReport::factory()->create();

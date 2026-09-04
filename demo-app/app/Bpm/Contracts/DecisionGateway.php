@@ -8,5 +8,5 @@ interface DecisionGateway
      * @param  array<string, mixed>  $inputData
      * @return array<string, mixed>
      */
-    public function evaluate(mixed $model, array $inputData): array;
+    public function evaluate(string $decisionKey, array $inputData): array;
 }

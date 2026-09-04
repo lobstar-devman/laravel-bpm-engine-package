@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Models\ExpenseDispute;
 use App\Models\ExpenseReport;
@@ -12,7 +13,7 @@ class ExpenseDisputePolicy
     public function open(User $user, ExpenseReport $expenseReport): bool
     {
         return $user->id === $expenseReport->submitter_id
-            && $expenseReport->currentState === 'rejected';
+            && $expenseReport->currentState === ExpenseReportState::Rejected;
     }
 
     public function gatherEvidence(User $user, ExpenseDispute $expenseDispute): bool

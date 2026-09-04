@@ -9,8 +9,8 @@ class PackageDecisionGateway implements DecisionGateway
 {
     public function __construct(protected DmnEvaluator $dmnEvaluator) {}
 
-    public function evaluate(mixed $model, array $inputData): array
+    public function evaluate(string $decisionKey, array $inputData): array
     {
-        return $this->dmnEvaluator->evaluate($model, $inputData);
+        return $this->dmnEvaluator->evaluate($decisionKey, $inputData);
     }
 }

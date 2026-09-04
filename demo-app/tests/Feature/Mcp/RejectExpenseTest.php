@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Enums\ExpenseReportState;
 use App\Enums\UserRole;
 use App\Mcp\Tools\RejectExpense;
 use App\Models\ExpenseReport;
@@ -26,7 +27,7 @@ class RejectExpenseTest extends TestCase
     public function test_the_assigned_manager_can_reject_during_manager_approval(): void
     {
         $manager = User::factory()->create(['role' => UserRole::Manager]);
-        $instance = Instance::factory()->withState('manager_approval')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::ManagerApproval)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'manager_id' => $manager->id,
@@ -47,7 +48,7 @@ class RejectExpenseTest extends TestCase
     public function test_finance_can_reject_during_finance_review(): void
     {
         $finance = User::factory()->create(['role' => UserRole::Finance]);
-        $instance = Instance::factory()->withState('finance_review')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::FinanceReview)->create();
         $expenseReport = ExpenseReport::factory()->create(['instance_id' => $instance->id]);
 
         $this->actingAs($finance);
@@ -65,7 +66,7 @@ class RejectExpenseTest extends TestCase
     public function test_a_manager_cannot_reject_during_finance_review(): void
     {
         $manager = User::factory()->create(['role' => UserRole::Manager]);
-        $instance = Instance::factory()->withState('finance_review')->create();
+        $instance = Instance::factory()->withState(ExpenseReportState::FinanceReview)->create();
         $expenseReport = ExpenseReport::factory()->create([
             'instance_id' => $instance->id,
             'manager_id' => $manager->id,

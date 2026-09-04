@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ExpenseReportState;
 use Database\Factories\ExpenseReportFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -55,6 +56,6 @@ class ExpenseReport extends Model
      */
     protected function currentState(): Attribute
     {
-        return Attribute::get(fn () => $this->instance->current_state);
+        return Attribute::get(fn () => ExpenseReportState::from($this->instance->current_state));
     }
 }

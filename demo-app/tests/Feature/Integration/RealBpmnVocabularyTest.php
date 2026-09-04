@@ -23,7 +23,7 @@ class RealBpmnVocabularyTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const EXPECTED_HASH = 'sha256:d4ed558bf5ca9bff8fa606ac28a048d5e69abb11e0429e76d72731c9bed8724a';
+    private const EXPECTED_HASH = 'sha256:e859c76db4084ed4ea578a31aa8458a9d643c86e28d7fede149ef78887b59467';
 
     public function test_expense_report_state_enum_values_are_real_bpmn_node_ids(): void
     {

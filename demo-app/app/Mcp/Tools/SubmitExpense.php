@@ -2,13 +2,12 @@
 
 namespace App\Mcp\Tools;
 
-use App\Bpm\Contracts\ModelDefinitionGateway;
 use App\Bpm\Contracts\RevisionGateway;
-use App\Bpm\Support\RevisionId;
 use App\Bpm\ValueObjects\InstanceId;
 use App\Enums\ExpenseReportState;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
+use App\Models\ModelDefinition;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -22,7 +21,6 @@ use Laravel\Mcp\Server\Tool;
 class SubmitExpense extends Tool
 {
     public function __construct(
-        protected ModelDefinitionGateway $modelDefinitionGateway,
         protected RevisionGateway $revisionGateway,
     ) {}
 
@@ -44,10 +42,14 @@ class SubmitExpense extends Tool
         $expenseReport = DB::transaction(function () use ($request, $validated) {
             $manager = User::where('email', $validated['manager_email'])->firstOrFail();
 
-            $revision = $this->modelDefinitionGateway->resolve('expense_reimbursement');
+            $revision = ModelDefinition::where('key', 'expense_reimbursement')
+                ->firstOrFail()
+                ->revisions()
+                ->latest('revision_number')
+                ->firstOrFail();
 
             $instance = Instance::create([
-                'model_revision_id' => RevisionId::from($revision),
+                'model_revision_id' => $revision->id,
                 'type' => 'process',
                 'current_state' => ExpenseReportState::SubmitExpense->value,
             ]);

@@ -202,5 +202,14 @@ the real package (no fakes) to:
   surfacing as a runtime `RuntimeException` mid-transition.
 
 Per ADR-012, this is BPMN-only — `ExpenseDisputeState::Open` and the
-CMMN flow are still unaddressed by the package and remain the open
-follow-up noted above.
+CMMN flow were still unaddressed by the package at the time this section
+was written and remained the open follow-up noted above.
+
+**Update:** `ExpenseDisputeState::Open`'s guessed value
+(`CasePlanModel_ExpenseDispute`) has since been checked against the real
+`CmmnParser`/`CmmnInterpreter` and was wrong — see
+`docs/gap-analysis/cmmn-ad-hoc-case-plan-unsupported.md` for the full
+resolution (the CMMN model also needed reshaping to match ADR-010, which
+is what exposed this). Corrected to `PlanItem_GatherEvidence`, the real
+start plan item, and confirmed by
+`tests/Feature/Integration/RealOpenDisputeGatewayTest.php`.

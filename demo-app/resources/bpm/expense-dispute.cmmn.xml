@@ -11,35 +11,44 @@
       <role id="Role_FinanceDirector" name="Finance Director" />
     </caseRoles>
 
-    <!-- Ad hoc: these are discretionary items on the case plan, not a
-         fixed sequence — any applicable item may be actioned while the
-         case is open, in whatever order the situation calls for. -->
+    <!-- Linear plan per ADR-010: CmmnParser supports a single flat
+         casePlanModel with exactly one designated start (the plan item
+         with no entryCriterion) and entryCriterion/sentry-derived
+         transitions, mirroring BPMN's sequence-flow shape. No
+         discretionary/ad hoc items. -->
     <casePlanModel id="CasePlanModel_ExpenseDispute" name="Expense Dispute" autoComplete="false">
 
       <planItem id="PlanItem_GatherEvidence" definitionRef="HumanTask_GatherEvidence" />
-      <planItem id="PlanItem_Escalate" definitionRef="HumanTask_Escalate" />
-      <planItem id="PlanItem_Interview" definitionRef="HumanTask_Interview" />
-      <planItem id="PlanItem_Resolve" definitionRef="HumanTask_Resolve" />
+
+      <planItem id="PlanItem_Interview" definitionRef="HumanTask_Interview">
+        <entryCriterion sentryRef="Sentry_AfterGatherEvidence" />
+      </planItem>
+
+      <planItem id="PlanItem_Escalate" definitionRef="HumanTask_Escalate">
+        <entryCriterion sentryRef="Sentry_AfterInterview" />
+      </planItem>
+
+      <planItem id="PlanItem_Resolve" definitionRef="HumanTask_Resolve">
+        <entryCriterion sentryRef="Sentry_AfterEscalate" />
+      </planItem>
 
       <humanTask id="HumanTask_GatherEvidence" name="Gather Evidence" isBlocking="true">
         <itemControl>
           <requiredRule />
-          <repetitionRule />
-        </itemControl>
-        <performerRef>Role_Investigator</performerRef>
-      </humanTask>
-
-      <humanTask id="HumanTask_Escalate" name="Escalate to Finance Director" isBlocking="true">
-        <itemControl>
-          <manualActivationRule />
         </itemControl>
         <performerRef>Role_Investigator</performerRef>
       </humanTask>
 
       <humanTask id="HumanTask_Interview" name="Interview" isBlocking="true">
         <itemControl>
-          <manualActivationRule />
-          <repetitionRule />
+          <requiredRule />
+        </itemControl>
+        <performerRef>Role_Investigator</performerRef>
+      </humanTask>
+
+      <humanTask id="HumanTask_Escalate" name="Escalate to Finance Director" isBlocking="true">
+        <itemControl>
+          <requiredRule />
         </itemControl>
         <performerRef>Role_Investigator</performerRef>
       </humanTask>
@@ -47,11 +56,29 @@
       <!-- Terminal/exit task: completing it closes the case. -->
       <humanTask id="HumanTask_Resolve" name="Resolve Dispute" isBlocking="true">
         <itemControl>
-          <manualActivationRule />
+          <requiredRule />
         </itemControl>
         <performerRef>Role_FinanceDirector</performerRef>
         <exitCriterion sentryRef="Sentry_CaseComplete" />
       </humanTask>
+
+      <sentry id="Sentry_AfterGatherEvidence">
+        <planItemOnPart sourceRef="PlanItem_GatherEvidence">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+
+      <sentry id="Sentry_AfterInterview">
+        <planItemOnPart sourceRef="PlanItem_Interview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+
+      <sentry id="Sentry_AfterEscalate">
+        <planItemOnPart sourceRef="PlanItem_Escalate">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
 
       <sentry id="Sentry_CaseComplete">
         <planItemOnPart sourceRef="PlanItem_Resolve">

@@ -2,14 +2,11 @@
 
 namespace App\Mcp\Tools;
 
-use App\Bpm\Contracts\ModelDefinitionGateway;
-use App\Bpm\Contracts\RevisionGateway;
-use App\Bpm\Support\RevisionId;
-use App\Bpm\ValueObjects\InstanceId;
 use App\Enums\ExpenseDisputeState;
 use App\Models\ExpenseDispute;
 use App\Models\ExpenseReport;
 use App\Models\Instance;
+use App\Models\ModelDefinition;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Facades\DB;
@@ -18,14 +15,9 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Open an ad hoc Expense Dispute case over a rejected expense report.')]
+#[Description('Open an Expense Dispute case over a rejected expense report.')]
 class OpenDispute extends Tool
 {
-    public function __construct(
-        protected ModelDefinitionGateway $modelDefinitionGateway,
-        protected RevisionGateway $revisionGateway,
-    ) {}
-
     /**
      * Handle the tool request.
      */
@@ -46,24 +38,24 @@ class OpenDispute extends Tool
         }
 
         $dispute = DB::transaction(function () use ($request, $expenseReport, $validated) {
-            $revision = $this->modelDefinitionGateway->resolve('expense_dispute');
+            $revision = ModelDefinition::where('key', 'expense_dispute')
+                ->firstOrFail()
+                ->revisions()
+                ->latest('revision_number')
+                ->firstOrFail();
 
             $caseInstance = Instance::create([
-                'model_revision_id' => RevisionId::from($revision),
+                'model_revision_id' => $revision->id,
                 'type' => 'case',
                 'current_state' => ExpenseDisputeState::Open->value,
             ]);
 
-            $dispute = ExpenseDispute::create([
+            return ExpenseDispute::create([
                 'instance_id' => $caseInstance->id,
                 'expense_report_id' => $expenseReport->id,
                 'opened_by' => $request->user()->id,
                 'evidence_summary' => $validated['evidence_summary'],
             ]);
-
-            $this->revisionGateway->transition(InstanceId::fromInstance($caseInstance), 'open_dispute');
-
-            return $dispute;
         });
 
         return Response::json([

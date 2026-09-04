@@ -49,7 +49,7 @@ class OpenDisputeTest extends TestCase
         $this->assertSame($expenseReport->id, $dispute->expense_report_id);
         $this->assertSame($employee->id, $dispute->opened_by);
         $this->assertSame('case', $dispute->instance->type);
-        $this->assertSame('open_dispute', $this->fakeRevisionGateway->transitions[0]['event']);
+        $this->assertCount(0, $this->fakeRevisionGateway->transitions);
     }
 
     public function test_a_dispute_cannot_be_opened_on_a_non_rejected_expense(): void
